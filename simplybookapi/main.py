@@ -99,7 +99,6 @@ class Main:
 
             else:
                 fail_counter += 1
-                # Had to get rid of this. Was making the test go in an endloess loop. Put a few print statments in to confirm.
                 self.get_auth_token(fail_counter)
 
         data = response.json()
