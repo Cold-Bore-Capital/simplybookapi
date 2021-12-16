@@ -3,12 +3,15 @@ import time
 from unittest import TestCase
 
 import pandas as pd
-from cbcdb import DBManager
 
-from jsonrpcclient import request, parse, Ok
-import logging
-import requests
+from simplybookapi.main import Main
+
 
 class TestSimplyBookApi(TestCase):
 
-    def _get_auth_token(self):
+    def test__get_auth_token(self):
+        m = Main(test_mode=True)
+        m.get_auth_token('', '')
+        self.assertEqual(1,1)
+
+

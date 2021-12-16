@@ -3,3 +3,5 @@ requests~=2.25.1
 setuptools>=57.1.0
 cbcdb>=1.0.13
 phonenumbers
+git+git://github.com/Cold-Bore-Capital/cbcvalidator.git@V0.0.7
+git+git://github.com/Cold-Bore-Capital/configuration-service-core.git@0.0.9
