@@ -10,7 +10,6 @@ from cbcdb import DBManager
 from configservice import Config
 
 
-
 class Main:
     """
         Queries the SimplyBook.me API.
@@ -74,7 +73,7 @@ class Main:
                 return None
         return output
 
-    def get_auth_token(self, api_url: str, api_credentials: Dict[str, Union[str, int]], fail_counter: int = 0) -> dict:
+    def get_auth_token(self, fail_counter: int = 0) -> dict:
         """
         Requests an access token from the EzyVet API
 
@@ -87,8 +86,9 @@ class Main:
             is retrieved.
 
         """
-        simply_book_api = Config().get_env('SIMPLY_BOOK_URL', default_value='https://user-api.simplybook.me', data_type_convert='str')
-        simply_book_company = Config().get_env('COMPANY_NAME', default_value='petswellness', data_type_convert='str' )
+        simply_book_api = Config().get_env('SIMPLY_BOOK_URL', default_value='https://user-api.simplybook.me',
+                                           data_type_convert='str')
+        simply_book_company = Config().get_env('COMPANY_NAME', default_value='petswellness', data_type_convert='str')
         simply_book_api_key = Config().get_env('SB_API_KEY', error_flag=True)
         response = requests.post(url=f'{simply_book_api}/login',
                                  json=request('getToken', params=(simply_book_company, simply_book_api_key)))
@@ -97,11 +97,13 @@ class Main:
             if fail_counter > 3:
                 raise InvalidTokenResponse(response.text)
 
-        else:
-            fail_counter += 1
-            self.get_auth_token(api_url, api_credentials, fail_counter)
+            else:
+                fail_counter += 1
+                # Had to get rid of this. Was making the test go in an endloess loop. Put a few print statments in to confirm.
+                self.get_auth_token(fail_counter)
 
-        token = parse(response.json())['result']
+        data = response.json()
+        token = data['result']
 
         if token:
             current_dt = datetime.utcnow()
@@ -110,7 +112,7 @@ class Main:
             with open('token_save.pkl', 'wb') as token_file:
                 pickle.dump(token_save, token_file)
 
-            return token_save
+            return token
         raise EmptyTokenError()
 
 
