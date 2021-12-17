@@ -74,7 +74,7 @@ class Main:
 
     def get_auth_token(self, fail_counter: int = 0) -> dict:
         """
-        Requests an access token from the EzyVet API
+        Requests an access token from the Simply Book API
 
         Args:
             api_url: URL to the API
@@ -161,8 +161,8 @@ class Main:
                     return False
                 else:
                     return token_data['token']
-        except:
-            return False
+        except FileNotFoundError:
+            raise PickleNotFoundError()
 
 
 class InvalidTokenResponse(requests.exceptions.HTTPError):
@@ -174,4 +174,7 @@ class EmptyTokenError(Exception):
 
 
 class SBAPIError(Exception):
+    pass
+
+class PickleNotFoundError(Exception):
     pass
