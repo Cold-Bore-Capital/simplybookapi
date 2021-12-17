@@ -44,7 +44,7 @@ class Main:
     def get(self,
             endpoint: str,
             function: str,
-            params: tuple,
+            params: Union[tuple, None] = None,
             dataframe_flag: bool = False) -> Union[pd.DataFrame, None, list]:
         """
         Main function to get data from API.
@@ -63,7 +63,7 @@ class Main:
         token = self.get_auth_token()
         path = f'{self._simply_book_api}/{endpoint}'
         headers = {'X-Company-Login': self._simply_book_company,
-                   'X-Token': token}
+                   'X-User-Token': token}
         output = self._sb_api_query(path, function, params, headers)
         if dataframe_flag:
             if output:
@@ -72,13 +72,11 @@ class Main:
                 return None
         return output
 
-    def get_auth_token(self, fail_counter: int = 0) -> dict:
+    def get_auth_token(self) -> str:
         """
         Requests an access token from the Simply Book API
 
         Args:
-            api_url: URL to the API
-            api_credentials: A dict containing all API credentials
 
         Returns:
             A string containing an access token. Any prior access tokens will be invalidated when a new access token
@@ -111,7 +109,7 @@ class Main:
                       function: str,
                       params: tuple,
                       headers: dict = None,
-                      fail_counter: int = 0) -> Union[dict, list]:
+                      fail_counter: int = 0) -> Union[dict, list, str]:
         """
         Queries the SB API and handles error retries.
 
