@@ -1,7 +1,7 @@
 import pickle
-from datetime import datetime, timedelta
-from typing import Any, Union, Tuple
-
+from datetime import datetime
+from typing import Union
+import json
 import pandas as pd
 import requests
 from cbcdb import DBManager
@@ -37,13 +37,18 @@ class Main:
 
         self._token_expire = Config(test_mode).get_env('TOKEN_EXPIRE', default_value=10, data_type_convert='int')
 
+        self._user_login_name = Config(test_mode).get_env('SB_USER_LOGIN_NAME', error_flag=True,
+                                                          test_response='ABCDEFG')
+
+        self._user_password = Config(test_mode).get_env('SB_USER_PASSWORD', error_flag=True, test_response='ABCDEFG')
+
     '''
     # Section - Public Methods
     '''
 
     def get(self,
             function: str,
-            params: Union[tuple, None] = None,
+            params: Union[tuple, dict, None] = None,
             endpoint: str = None,
             dataframe_flag: bool = False) -> Union[pd.DataFrame, None, list]:
         """
@@ -60,11 +65,15 @@ class Main:
             If dataframe_flag is True: A Pandas DataFrame containing the data.
 
         """
-        token = self._get_auth_token()
+        token_type = 'user' if endpoint == 'admin' else 'api'
+        token = self._get_token(token_type)
         endpoint = endpoint if endpoint else ''
         path = f'{self._simply_book_api}/{endpoint}'
-        headers = {'X-Company-Login': self._simply_book_company,
-                   'X-Token': token}
+        headers = {'X-Company-Login': self._simply_book_company}
+        if token_type == 'api':
+            headers['X-Token'] = token
+        else:
+            headers['X-User-Token'] = token
         output = self._sb_api_query(path, function, params, headers)
         if dataframe_flag:
             if output:
@@ -72,38 +81,6 @@ class Main:
             else:
                 return None
         return output
-
-    def _get_auth_token(self) -> str:
-        """
-        Requests an access token from the Simply Book API
-
-        Args:
-
-        Returns:
-            A string containing an access token. Any prior access tokens will be invalidated when a new access token
-            is retrieved.
-
-        """
-        api_path = self._simply_book_api
-        company = self._simply_book_company
-        api_key = self._simply_book_api_key
-        token = self._read_token_pickle(self._token_expire)
-        if not token:
-            path = f'{api_path}/login'
-            params = (company, api_key)
-            function = 'getToken'
-            token = self._sb_api_query(path, function, params)
-            if token:
-                current_dt = datetime.utcnow()
-                token_save = {'token': token,
-                              'create_date': current_dt}
-                with open('../token_save.pkl', 'wb') as token_file:
-                    pickle.dump(token_save, token_file)
-                return token
-            else:
-                raise EmptyTokenError()
-        else:
-            return token
 
     def _sb_api_query(self,
                       path: str,
@@ -139,19 +116,107 @@ class Main:
         else:
             return data['result']
 
+    def _get_token(self, token_type: str) -> str:
+        """
+        Requests an API type access token from the Simply Book API
+
+        Returns an application's token string for a company. You should use this token to authenticate all calls of
+        Company public service methods, Company public service API methods, and Catalogue|Catalogue API methods.
+
+        Args:
+            token_type: Either 'api', or 'user'. This will switch between reading the file token_save.pkl for API and
+                        user_token_save.pkl for user.
+
+        Returns:
+            A string containing an access token. Any prior access tokens will be invalidated when a new access token
+            is retrieved.
+
+        """
+        api_path = self._simply_book_api
+        company = self._simply_book_company
+        api_key = self._simply_book_api_key
+        user_login_name = self._user_login_name
+        user_password = self._user_password
+        token = self._read_token_pickle(self._token_expire, token_type)
+        if not token:
+            path = f'{api_path}/login'
+            if token_type == 'api':
+                params = (company, api_key)
+                function = 'getToken'
+                token_file_path = '../token_save.pkl'
+            elif token_type == 'user':
+                params = (company, user_login_name, user_password)
+                function = 'getUserToken'
+                token_file_path = '../user_token_save.pkl'
+            else:
+                raise InvalidTokenTypeSelection(token_type)
+
+            token = self._sb_api_query(path, function, params)
+            if token:
+                current_dt = datetime.utcnow()
+                token_save = {'token': token,
+                              'create_date': current_dt}
+                with open(token_file_path, 'wb') as token_file:
+                    pickle.dump(token_save, token_file)
+                return token
+            else:
+                raise EmptyTokenError()
+        else:
+            return token
+
+    # def _get_user_token(self) -> str:
+    #     """
+    #     Requests an User type access token from the Simply Book API
+    #
+    #     Returns an authentication token string. You should use this token to authenticate all calls of
+    #     Company administration service methods, Company administration service API methods.
+    #     and Catalogue API methods
+    #
+    #     Args:
+    #
+    #     Returns:
+    #         A string containing an access token. Any prior access tokens will be invalidated when a new access token
+    #         is retrieved.
+    #
+    #     """
+    #     api_path = self._simply_book_api
+    #     company = self._simply_book_company
+    #     user_login_name = self._user_login_name
+    #     user_password = self._user_password
+    #     token = self._read_token_pickle(self._token_expire, 'user')
+    #     if not token:
+    #         path = f'{api_path}/login'
+    #         params = (company, user_login_name, user_password)
+    #         function = 'getUserToken'
+    #         token = self._sb_api_query(path, function, params)
+    #         if token:
+    #             current_dt = datetime.utcnow()
+    #             token_save = {'token': token,
+    #                           'create_date': current_dt}
+    #             with open('../user_token_save.pkl', 'wb') as token_file:
+    #                 pickle.dump(token_save, token_file)
+    #             return token
+    #         else:
+    #             raise EmptyTokenError()
+    #     else:
+    #         return token
+
     @staticmethod
-    def _read_token_pickle(token_expire_limit: int) -> Union[str, bool]:
+    def _read_token_pickle(token_expire_limit: int, token_type: str) -> Union[str, bool]:
         """
         Reads the locally saved token from pickle. Returns the token if not past expire time, otherwise returns false.
 
         Args:
             token_expire_limit: The number of minutes from token create date before the token becomes invalid.
+            token_type: Either 'api', or 'user'. This will switch between reading the file token_save.pkl for API and
+                        user_token_save.pkl for user.
 
         Returns:
             Either a token, or False.
         """
+        filename = '../token_save.pkl' if token_type == 'api' else '../user_token_save.pkl'
         try:
-            with open('../token_save.pkl', 'rb') as token_file:
+            with open(filename, 'rb') as token_file:
                 token_data = pickle.load(token_file)
                 token_create_time = token_data['create_date']
                 now_time = datetime.utcnow()
@@ -178,3 +243,8 @@ class SBAPIError(Exception):
 
 class PickleNotFoundError(Exception):
     pass
+
+
+class InvalidTokenTypeSelection(Exception):
+    def __init__(self, token_type):
+        super().__init__(f'Invalid token type specified. You specified {token_type}. Valid types are "api" or "user"')
