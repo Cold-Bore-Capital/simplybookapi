@@ -42,44 +42,29 @@ class Main:
     '''
 
     def get(self,
-            location_id: int,
-            endpoint_ver: str,
-            endpoint_name: str,
-            params: dict = None,
-            headers: dict = None,
+            endpoint: str,
+            function: str,
+            params: tuple,
             dataframe_flag: bool = False) -> Union[pd.DataFrame, None, list]:
         """
-        Main function to get api data
+        Main function to get data from API.
+
         Args:
-            location_id: Location ID to operate on.
-            endpoint_name: endpoint to query
-            endpoint_ver: version of the endpoint to use.
-            headers: headers to dict format
-            params: params to dict format
+            endpoint: A string with the endpoint name. i.e 'login', 'bookings'.
+            function: The name of the RPC function to call
+            params: A tuple containing the parameter inputs to the RPC function.
             dataframe_flag: When set to true, method will return results in a Pandas DataFrame format.
 
         Returns:
             If dataframe_flag is False: A list of dicts containing the data.
             If dataframe_flag is True: A Pandas DataFrame containing the data.
+
         """
-        endpoint = f'{endpoint_ver}/{endpoint_name}'
-        db = self._db
-        params = self._build_params(params)
-        if not self._access_token_cache or self._access_token_cache_expire <= datetime.now():
-            api_credentials = self._get_api_credentials(location_id, self._config.ezy_vet_api, db,
-                                                        self.get_access_token, 10)
-            self._access_token_cache_expire = datetime.now() + timedelta(minutes=10)
-            self._access_token_cache = api_credentials
-        else:
-            api_credentials = self._access_token_cache
-        headers = self._set_headers(api_credentials, headers)
-        api_url = self._config.ezy_vet_api
-        output = self._get_data_from_api(api_url=api_url,
-                                         params=params,
-                                         headers=headers,
-                                         endpoint=endpoint,
-                                         db=db,
-                                         location_id=location_id)
+        token = self.get_auth_token()
+        path = f'{self._simply_book_api}/{endpoint}'
+        headers = {'X-Company-Login': self._simply_book_company,
+                   'X-Token': token}
+        output = self._sb_api_query(path, function, params, headers)
         if dataframe_flag:
             if output:
                 return pd.DataFrame(output)
@@ -87,7 +72,7 @@ class Main:
                 return None
         return output
 
-    def get_auth_token(self, api_path, company, api_key, fail_counter: int = 0) -> dict:
+    def get_auth_token(self, fail_counter: int = 0) -> dict:
         """
         Requests an access token from the EzyVet API
 
@@ -100,6 +85,9 @@ class Main:
             is retrieved.
 
         """
+        api_path = self._simply_book_api
+        company = self._simply_book_company
+        api_key = self._simply_book_api_key
         token = self._read_token_pickle(self._token_expire)
         if not token:
             path = f'{api_path}/login'
@@ -118,7 +106,12 @@ class Main:
         else:
             return token
 
-    def _sb_api_query(self, path: str, function: str, params: Tuple[Any], fail_counter: int = 0) -> Union[dict, list]:
+    def _sb_api_query(self,
+                      path: str,
+                      function: str,
+                      params: tuple,
+                      headers: dict = None,
+                      fail_counter: int = 0) -> Union[dict, list]:
         """
         Queries the SB API and handles error retries.
 
@@ -126,12 +119,13 @@ class Main:
             path: The full path to the API end point. For example, https://user-api.simplybook.me/login
             function: The name of the RPC function to call
             params: A tuple containing the values to pass in to the RPC.
+            headers: Authentication or other headers to send.
             fail_counter: A counter to track the number of failed API query events.
 
         Returns:
             The decoded data from the API response as either a list or dict.
         """
-        response = requests.post(url=path, json=request(function, params=params))
+        response = requests.post(url=path, json=request(function, params=params), headers=headers)
         if response.status_code != 200:
             if fail_counter > self._retry_limit:
                 raise InvalidTokenResponse(response.text)
@@ -139,7 +133,7 @@ class Main:
                 print(
                     f'API query failed with error code {response.status_code}. Retry number {fail_counter}.\n{response.text}')
                 fail_counter += 1
-                self._sb_api_query(path, function, params, fail_counter)
+                self._sb_api_query(path, function, params, headers, fail_counter)
         data = response.json()
         if 'error' in data.keys():
             raise SBAPIError(data['error'])
