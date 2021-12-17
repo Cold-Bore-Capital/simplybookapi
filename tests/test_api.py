@@ -48,7 +48,7 @@ class TestSimplyBookApi(TestCase):
             pickle.dump(token_save, token_file)
 
         m = MockAuthToken(test_mode=True)
-        token = m.get_auth_token()
+        token = m._get_auth_token()
         golden = 'abcdefg'
         self.assertEqual(golden, token)
 
@@ -59,13 +59,13 @@ class TestSimplyBookApi(TestCase):
             pickle.dump(token_save, token_file)
 
         m = MockAuthToken(test_mode=True)
-        token = m.get_auth_token()
+        token = m._get_auth_token()
         golden = 'new_token_res'
         self.assertEqual(golden, token)
 
         os.remove('../token_save.pkl')
         m = MockAuthToken(test_mode=True)
-        token = m.get_auth_token()
+        token = m._get_auth_token()
         golden = 'new_token_res'
         self.assertEqual(golden, token)
 
@@ -73,7 +73,7 @@ class TestSimplyBookApi(TestCase):
             os.remove('../token_save.pkl')
             m = MockAuthToken(test_mode=True)
             m.fail_mode = True
-            token = m.get_auth_token()
+            token = m._get_auth_token()
 
 
 

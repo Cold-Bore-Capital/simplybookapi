@@ -2,6 +2,6 @@ from simplybookapi.main import Main
 
 m = Main(test_mode=False)
 
-res = m.get('admin','getEventList')
+res = m.get('getEventList')
 
 a = 0

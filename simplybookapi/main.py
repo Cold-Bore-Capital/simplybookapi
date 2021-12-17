@@ -42,9 +42,9 @@ class Main:
     '''
 
     def get(self,
-            endpoint: str,
             function: str,
             params: Union[tuple, None] = None,
+            endpoint: str = None,
             dataframe_flag: bool = False) -> Union[pd.DataFrame, None, list]:
         """
         Main function to get data from API.
@@ -60,10 +60,11 @@ class Main:
             If dataframe_flag is True: A Pandas DataFrame containing the data.
 
         """
-        token = self.get_auth_token()
+        token = self._get_auth_token()
+        endpoint = endpoint if endpoint else ''
         path = f'{self._simply_book_api}/{endpoint}'
         headers = {'X-Company-Login': self._simply_book_company,
-                   'X-User-Token': token}
+                   'X-Token': token}
         output = self._sb_api_query(path, function, params, headers)
         if dataframe_flag:
             if output:
@@ -72,7 +73,7 @@ class Main:
                 return None
         return output
 
-    def get_auth_token(self) -> str:
+    def _get_auth_token(self) -> str:
         """
         Requests an access token from the Simply Book API
 
@@ -159,8 +160,8 @@ class Main:
                     return False
                 else:
                     return token_data['token']
-        except FileNotFoundError:
-            raise PickleNotFoundError()
+        except:
+            return False
 
 
 class InvalidTokenResponse(requests.exceptions.HTTPError):
@@ -173,6 +174,7 @@ class EmptyTokenError(Exception):
 
 class SBAPIError(Exception):
     pass
+
 
 class PickleNotFoundError(Exception):
     pass
