@@ -31,11 +31,12 @@ class API(Core):
             edited_date_to: A date or datetime of booking edited range date to filter.
             unit_group_id: Gets bookings assigned for certain service provider.
             event_id: Gets bookings only for certain service.
-            is_confirmed:
-            dataframe_flag:
+            is_confirmed: Integer 1 or 0 to indicate if booking has been confirmed.
+            dataframe_flag: Flag to indicate if results should be returned in a dataframe. Otherwise a list or dict of
+                           results will be returned.
 
         Returns:
-
+            A list or dataframe containing bookings matching filter criteria.
         """
         params = {"order": "start_date"}
 
@@ -83,5 +84,16 @@ class API(Core):
     def get_booking_details(self,
                             booking_id: int,
                             dataframe_flag: bool = False):
-        params = tuple(booking_id)
+        """
+        Gets details for a booking by ID number.
+
+        Args:
+            booking_id: The ID number of the booking as an int
+            dataframe_flag: Flag to indicate if results should be returned in a dataframe. Otherwise a list or dict of
+                           results will be returned.
+
+        Returns:
+            A dict or dataframe containing the details of the booking requested.
+        """
+        params = (booking_id)
         return self.get('getBookingDetails', params, 'admin', dataframe_flag=dataframe_flag)
