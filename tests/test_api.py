@@ -3,7 +3,7 @@ import pickle, os
 from unittest import TestCase
 from typing import Any, Union, Tuple
 
-from simplybookapi.main import Main, EmptyTokenError, InvalidTokenResponse
+from simplybookapi.core import Core, EmptyTokenError, InvalidTokenResponse
 
 
 class TestSimplyBookApi(TestCase):
@@ -16,7 +16,7 @@ class TestSimplyBookApi(TestCase):
         with open('../token_save.pkl', 'wb') as token_file:
             pickle.dump(token_save, token_file)
 
-        m = Main(test_mode=True)
+        m = Core(test_mode=True)
         token = m._read_token_pickle(10, 'api')
         golden = 'abcdefg'
         self.assertEqual(golden, token)
@@ -27,12 +27,12 @@ class TestSimplyBookApi(TestCase):
         with open('../token_save.pkl', 'wb') as token_file:
             pickle.dump(token_save, token_file)
 
-        m = Main(test_mode=True)
+        m = Core(test_mode=True)
         token = m._read_token_pickle(10, 'api')
         self.assertFalse(token)
 
         os.remove('../token_save.pkl')
-        m = Main(test_mode=True)
+        m = Core(test_mode=True)
         token = m._read_token_pickle(10, 'api')
         self.assertFalse(token)
 
@@ -110,7 +110,7 @@ class TestSimplyBookApi(TestCase):
 
 
 
-class MockAuthToken(Main):
+class MockAuthToken(Core):
 
     def __init__(self, test_mode=True):
         super().__init__(test_mode)

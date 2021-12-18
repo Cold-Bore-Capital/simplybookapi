@@ -1,8 +1,10 @@
 from datetime import datetime
-from simplybookapi.functions.admin.get_bookings import GetBookings
+from simplybookapi import API
 
-g = GetBookings(test_mode=False)
+api = API()
+res = api.get_bookings(date_from=datetime(2021,1,1), date_to=datetime(2021,12,31))
 
-res = g.get_bookings(date_from=datetime(2021,1,1), date_to=datetime(2021,12,31))
-
-a = 0
+for booking in res:
+    booking_id = booking['id']
+    booking_details = api.get_booking_details(booking_id)
+    a = 0

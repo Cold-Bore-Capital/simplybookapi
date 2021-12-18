@@ -9,7 +9,7 @@ from configservice import Config
 from jsonrpcclient import request, request_json
 
 
-class Main:
+class Core:
     """
         Queries the SimplyBook.me API.
         """
@@ -105,7 +105,6 @@ class Main:
             # Convert the params into a list/dict. The RPC function requires that even a dict type structure
             # be wrapped in a list.
             params = [params]
-
         response = requests.post(url=path, json=request(function, params=params), headers=headers)
         if response.status_code != 200:
             if response.status_code == 500:

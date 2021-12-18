@@ -1,8 +1,8 @@
-from simplybookapi.main import Main
+from simplybookapi.core import Core
 
 
 
-m = Main(test_mode=False)
+m = Core(test_mode=False)
 
 res = m._get_token()
 
