@@ -1,10 +1,7 @@
 from datetime import datetime, timedelta
-import time, pickle, os
+import pickle, os
 from unittest import TestCase
 from typing import Any, Union, Tuple
-from configservice import Config
-
-import pandas as pd
 
 from simplybookapi.main import Main, EmptyTokenError, InvalidTokenResponse
 
