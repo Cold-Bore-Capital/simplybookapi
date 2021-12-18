@@ -21,25 +21,25 @@ class GetBookings(Main):
                      unit_group_id: int = None,
                      is_confirmed: int = None,
                      dataframe_flag: bool = False):
-        params = {'order': 'start_date'}
+        params = {"order": "start_date"}
 
         if date_from:
-            params['date_from'] = date_from
+            params['date_from'] = date_from.strftime('%Y-%m-%d')
 
         if date_to:
-            params['date_to'] = date_to
+            params['date_to'] = date_to.strftime('%Y-%m-%d')
 
         if created_date_from:
-            params['created_date_from'] = created_date_from
+            params['created_date_from'] = created_date_from.strftime('%Y-%m-%d')
 
         if created_date_to:
-            params['created_date_to'] = created_date_to
+            params['created_date_to'] = created_date_to.strftime('%Y-%m-%d')
 
         if edited_date_from:
-            params['edited_date_from'] = edited_date_from
+            params['edited_date_from'] = edited_date_from.strftime('%Y-%m-%d')
 
         if edited_date_to:
-            params['edited_date_to'] = edited_date_to
+            params['edited_date_to'] = edited_date_to.strftime('%Y-%m-%d')
 
         if unit_group_id:
             params['unit_group_id'] = unit_group_id

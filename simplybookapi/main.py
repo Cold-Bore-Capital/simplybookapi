@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from cbcdb import DBManager
 from configservice import Config
-from jsonrpcclient import request
+from jsonrpcclient import request, request_json
 
 
 class Main:
@@ -94,15 +94,23 @@ class Main:
         Args:
             path: The full path to the API end point. For example, https://user-api.simplybook.me/login
             function: The name of the RPC function to call
-            params: A tuple containing the values to pass in to the RPC.
+            params: A tuple or dict containing the values to pass in to the RPC.
             headers: Authentication or other headers to send.
             fail_counter: A counter to track the number of failed API query events.
 
         Returns:
             The decoded data from the API response as either a list or dict.
         """
+        if isinstance(params, dict):
+            # Convert the params into a list/dict. The RPC function requires that even a dict type structure
+            # be wrapped in a list.
+            params = [params]
+
         response = requests.post(url=path, json=request(function, params=params), headers=headers)
         if response.status_code != 200:
+            if response.status_code == 500:
+                error = 'Server error - 500 Code'
+                raise SBAPIError(error)
             if fail_counter > self._retry_limit:
                 raise InvalidTokenResponse(response.text)
             else:
