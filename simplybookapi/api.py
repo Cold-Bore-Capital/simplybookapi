@@ -97,3 +97,4 @@ class API(Core):
         """
         params = (booking_id)
         return self.get('getBookingDetails', params, 'admin', dataframe_flag=dataframe_flag)
+
