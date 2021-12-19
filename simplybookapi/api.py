@@ -98,3 +98,89 @@ class API(Core):
         params = (booking_id)
         return self.get('getBookingDetails', params, 'admin', dataframe_flag=dataframe_flag)
 
+    def get_service_providers_available_times(self,
+                                              date_from: datetime = None,
+                                              date_to: datetime = None,
+                                              unit_id: int = None,
+                                              event_id: int = None,
+                                              count: int = None,
+                                              dataframe_flag: bool = False):
+        """
+        Returns available time intervals for all service providers for given period, taking into account breaktimes,
+        start and end working time
+
+        Args:
+            date_from: A date or datetime of booking start range date to filter.
+            date_to: A date or datetime of booking end range date to filter.
+            unit_id: Gets bookings assigned for certain provider.
+            event_id: Gets bookings only for certain service.
+            count: Integer count of times.
+        Returns:
+            A list or dataframe containing bookings matching filter criteria.
+        """
+        params = {"order": "start_date"}
+
+        if date_from:
+            params['date_from'] = date_from.strftime('%Y-%m-%d')
+            if date_from.hour != 0 or date_from.minute != 0:
+                params['time_from'] = date_from.strftime('%H:%M:%S')
+
+        if date_to:
+            params['date_to'] = date_to.strftime('%Y-%m-%d')
+            if date_to.hour != 0 or date_to.minute != 0:
+                params['time_to'] = date_to.strftime('%H:%M:%S')
+
+        if unit_id:
+            params['unit_id'] = unit_id
+
+        if event_id:
+            params['event_id'] = event_id
+
+        if count:
+            params['count'] = count
+
+        return self.get('getAvailableTimeIntervals', params, 'admin', dataframe_flag=dataframe_flag)
+
+
+    def get_all_services_available_times(self,
+                                              date_from: datetime = None,
+                                              date_to: datetime = None,
+                                              unit_id: int = None,
+                                              event_id: int = None,
+                                              count: int = None,
+                                              dataframe_flag: bool = False):
+        """
+        Returns available time intervals for all services for given period, taking into account breaktimes, start and
+        end working time
+
+        Args:
+            date_from: A date or datetime of booking start range date to filter.
+            date_to: A date or datetime of booking end range date to filter.
+            unit_id: Gets bookings assigned for certain provider.
+            event_id: Gets bookings only for certain service.
+            count: Integer count of times.
+        Returns:
+            A list or dataframe containing bookings matching filter criteria.
+        """
+        params = {"order": "start_date"}
+
+        if date_from:
+            params['date_from'] = date_from.strftime('%Y-%m-%d')
+            if date_from.hour != 0 or date_from.minute != 0:
+                params['time_from'] = date_from.strftime('%H:%M:%S')
+
+        if date_to:
+            params['date_to'] = date_to.strftime('%Y-%m-%d')
+            if date_to.hour != 0 or date_to.minute != 0:
+                params['time_to'] = date_to.strftime('%H:%M:%S')
+
+        if unit_id:
+            params['unit_id'] = unit_id
+
+        if event_id:
+            params['event_id'] = event_id
+
+        if count:
+            params['count'] = count
+
+        return self.get('getServiceAvailableTimeIntervals', params, 'admin', dataframe_flag=dataframe_flag)
