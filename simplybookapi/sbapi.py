@@ -3,7 +3,7 @@ from datetime import datetime
 from simplybookapi.core import Core
 
 
-class API(Core):
+class SbApi(Core):
 
     def __init__(self, test_mode=False):
         super().__init__(test_mode)
