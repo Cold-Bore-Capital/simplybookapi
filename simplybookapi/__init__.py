@@ -1,1 +1,1 @@
-from simplybookapi.api import API
+from simplybookapi.sbapi import SbApi as sb
